@@ -1,4 +1,4 @@
-import java.io.BufferedReader;
+import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -6,16 +6,16 @@ import java.util.List;
 
 public final class ClientReadThread extends Thread {
     private final Socket socket;
-    private final BufferedReader inputStream;
-    private final List<String> messages;
+    private final ObjectInputStream inputStream;
+    private final List<Message> messages;
 
-    public ClientReadThread(Socket socket, BufferedReader inputStream) {
+    public ClientReadThread(Socket socket, ObjectInputStream inputStream) {
         this.socket = socket;
         this.inputStream = inputStream;
         this.messages = Collections.synchronizedList(new LinkedList<>());
     }
 
-    public List<String> getMessages() {
+    public List<Message> getMessages() {
         return messages;
     }
 
@@ -27,13 +27,13 @@ public final class ClientReadThread extends Thread {
             }
 
             try {
-                final String incoming = inputStream.readLine();
+                inputStream.read();
+                final Message incoming = (Message) inputStream.readObject();
                 if (incoming == null) {
                     continue;
                 }
                 messages.add(incoming);
             } catch (Exception e) {
-                e.printStackTrace();
             }
         }
     }

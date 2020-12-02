@@ -2,33 +2,32 @@ import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public final class ChatClient extends Application {
+    private static final String DEFAULT_COLOR = "BLACK";
+    private static final String DEFAULT_FONT = "Cambria";
     private Timeline timeline;
     private ClientReadThread readThread;
     private Socket socket;
-    private DataOutputStream outToServer;
-    private BufferedReader inFromServer;
-
-    private void addMessage(VBox messages, Label message) {
-        messages.getChildren().add(message);
-    }
+    private ObjectOutputStream outToServer;
+    private ObjectInputStream inFromServer;
 
     @Override
     public void start(Stage stage) {
@@ -50,8 +49,8 @@ public final class ChatClient extends Application {
             try {
                 // NETWORK
                 socket = new Socket("localhost", 1234);
-                outToServer = new DataOutputStream(socket.getOutputStream());
-                inFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                outToServer = new ObjectOutputStream(socket.getOutputStream());
+                inFromServer = new ObjectInputStream(socket.getInputStream());
 
                 // GUI
                 final VBox chatRoom = new VBox();
@@ -63,6 +62,7 @@ public final class ChatClient extends Application {
 
                 final TextField chatInput = new TextField();
                 chatInput.setMinWidth(300);
+                chatInput.setMinHeight(30);
                 chatInput.setPromptText("Send a message to the chat room");
                 chatInput.prefWidthProperty().bind(chatRoom.prefWidthProperty());
 
@@ -72,12 +72,39 @@ public final class ChatClient extends Application {
                 timeline.setCycleCount(Animation.INDEFINITE);
                 timeline.getKeyFrames().add(new KeyFrame(Duration.seconds(0.5), action -> {
                     while (!readThread.getMessages().isEmpty()) {
-                        messageHolder.getChildren().add(new Label(readThread.getMessages().remove(0)));
+                        final Message message = readThread.getMessages().remove(0);
+                        final Label messageLabel = LabelBuilder.create().text(message.getContent()).textFill(Color.valueOf(message.getColor())).style(String.format("-fx-font-size: 18; -fx-font-family: %s", message.getFont())).build();
+                        messageHolder.getChildren().add(messageLabel);
                     }
                 }));
                 readThread.start();
                 timeline.play();
-                outToServer.writeBytes(name + "\r\n");
+                outToServer.writeObject(new Message("", "", name));
+
+                final List<String> colors = Files.lines(new File("colors.txt").toPath()).collect(Collectors.toList());
+                final ListView<ColorHBox> colorsListView = new ListView<>(FXCollections.observableArrayList(colors.stream().map(color -> {
+                    final ColorHBox container = new ColorHBox(color);
+                    container.setSpacing(5);
+
+                    final Rectangle rectangle = new Rectangle();
+                    rectangle.setWidth(40);
+                    rectangle.setHeight(40);
+                    rectangle.setFill(Color.valueOf(color));
+
+                    final Label colorLabel = new Label(Utils.fullyCapitalize(color));
+                    colorLabel.setStyle("-fx-font-size: 24");
+
+                    container.getChildren().addAll(rectangle, colorLabel);
+
+                    return container;
+                }).collect(Collectors.toList())));
+
+                final List<String> fonts = Files.lines(new File("fonts.txt").toPath()).collect(Collectors.toList());
+                final ListView<Label> fontsListView = new ListView<>(FXCollections.observableArrayList(fonts.stream().map(font -> {
+                    final Label fontLabel = new Label(font);
+                    fontLabel.setStyle(String.format("-fx-font-family: %s; -fx-font-size: 24", font));
+                    return fontLabel;
+                }).collect(Collectors.toList())));
 
                 final Button sendMessage = new Button("Send");
                 sendMessage.setOnAction(sendMessageEvent -> {
@@ -86,7 +113,13 @@ public final class ChatClient extends Application {
                         return;
                     }
                     try {
-                        outToServer.writeBytes(message + "\r\n");
+                        final ColorHBox selectedColor = colorsListView.getSelectionModel().getSelectedItem();
+                        final Label selectedFont = fontsListView.getSelectionModel().getSelectedItem();
+                        outToServer.writeObject(new Message(
+                                selectedColor == null ? DEFAULT_COLOR : selectedColor.getColor(),
+                                selectedFont == null ? DEFAULT_FONT : selectedFont.getText(),
+                                message
+                        ));
                         chatInput.clear();
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -99,7 +132,13 @@ public final class ChatClient extends Application {
                 hBox.getChildren().addAll(chatInput, sendMessage);
                 chatRoom.getChildren().addAll(scrollPane, hBox);
 
-                stage.setScene(new Scene(chatRoom));
+                final TabPane tabPane = new TabPane();
+                tabPane.getTabs().add(new Tab("Chat", chatRoom));
+                tabPane.getTabs().add(new Tab("Color", colorsListView));
+                tabPane.getTabs().add(new Tab("Font", fontsListView));
+                tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+
+                stage.setScene(new Scene(tabPane));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -121,7 +160,7 @@ public final class ChatClient extends Application {
     @Override
     public void stop() {
         try {
-            outToServer.writeBytes(ClientWriteThread.QUIT_COMMAND + "\r\n");
+            outToServer.writeObject(new Message("", "", ClientWriteThread.QUIT_COMMAND));
             timeline.stop();
             socket.close();
             inFromServer.close();
