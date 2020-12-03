@@ -7,12 +7,22 @@ public final class ChatServer {
     public static void main(String[] args) throws Exception {
         final ServerSocket socket = new ServerSocket(1234);
 
-        final Map<String, ClientWriteThread> users = Collections.synchronizedMap(new LinkedHashMap<>());
+        final UserManager userManager = new UserManager(Collections.synchronizedMap(new LinkedHashMap<>()));
+
+        final Map<String, AbstractCommand> commands = new HashMap<>();
+        final AbstractCommand[] allCommands = {
+                new ListCommand(),
+                new MsgCommand(),
+                new QuitCommand()
+        };
+        for (AbstractCommand abstractCommand : allCommands) {
+            commands.put(abstractCommand.getAlias(), abstractCommand);
+        }
 
         while (true) {
             final Socket connection = socket.accept();
             if (connection != null) {
-                final ClientWriteThread clientThread = new ClientWriteThread(connection, users);
+                final ClientWriteThread clientThread = new ClientWriteThread(connection, userManager, commands);
                 clientThread.start();
             }
         }

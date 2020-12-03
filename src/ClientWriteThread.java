@@ -3,42 +3,32 @@ import java.net.Socket;
 import java.util.Map;
 
 public final class ClientWriteThread extends Thread {
-    public static final String QUIT_COMMAND = "{quit}";
-    private static final String SERVER_COLOR = "BLACK";
-    private static final String SERVER_FONT = "ARIAL";
+    public static final String SERVER_COLOR = "BLACK";
+    public static final String SERVER_FONT = "ARIAL";
     private static final String JOIN_MESSAGE = "%s has joined the chat room!\r\n";
-    private static final String QUIT_MESSAGE = "%s has left the chat room!\r\n";
     private static final String NAME_CHOSEN_MESSAGE = "Welcome %s!\r\n";
     private final Socket socket;
-    private final Map<String, ClientWriteThread> users;
+    private final UserManager userManager;
+    private final Map<String, AbstractCommand> commands;
     private ObjectOutputStream outputStream;
     private ObjectInputStream inputStream;
-    private String name;
+    private String userName;
 
-    public ClientWriteThread(Socket socket, Map<String, ClientWriteThread> users) {
+    public ClientWriteThread(Socket socket, UserManager userManager, Map<String, AbstractCommand> commands) {
         this.socket = socket;
-        this.users = users;
+        this.userManager = userManager;
+        this.commands = commands;
         try {
             this.outputStream = new ObjectOutputStream(socket.getOutputStream());
             this.inputStream = new ObjectInputStream(socket.getInputStream());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        this.name = null;
+        this.userName = null;
     }
 
     private String formatMessage(String message) {
-        return String.format("%s: %s\r\n", name, message);
-    }
-
-    private void sendMessageToAllUsers(Message message) {
-        users.values().forEach(user -> {
-            try {
-                user.getOutputStream().writeObject(message);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+        return String.format("%s: %s\r\n", userName, message);
     }
 
     public Socket getSocket() {
@@ -53,6 +43,10 @@ public final class ClientWriteThread extends Thread {
         return inputStream;
     }
 
+    public String getUserName() {
+        return userName;
+    }
+
     @Override
     public void run() {
         try {
@@ -62,21 +56,30 @@ public final class ClientWriteThread extends Thread {
                 }
 
                 final Message message = (Message) inputStream.readObject();
-                if (message.getContent().startsWith(QUIT_COMMAND)) {
-                    users.remove(name);
-                    sendMessageToAllUsers(new Message(SERVER_COLOR, SERVER_FONT, String.format(QUIT_MESSAGE, name)));
-                    break;
-                } else if (name == null) {
-                    name = message.getContent();
-                    users.put(name, this);
-                    outputStream.writeBytes(String.format(NAME_CHOSEN_MESSAGE, name));
-                    sendMessageToAllUsers(new Message(SERVER_COLOR, SERVER_FONT, String.format(JOIN_MESSAGE, name)));
-                } else {
-                    sendMessageToAllUsers(new Message(message.getColor(), message.getFont(), formatMessage(message.getContent())));
+                final String content = message.getContent();
+
+                if (userName == null) {
+                    userName = message.getContent();
+                    userManager.addUser(userName, this);
+                    outputStream.writeBytes(String.format(NAME_CHOSEN_MESSAGE, userName));
+                    userManager.broadcast(new Message(SERVER_COLOR, SERVER_FONT, String.format(JOIN_MESSAGE, userName)));
+                    continue;
                 }
+
+                if (content.startsWith("/")) {
+                    final String[] splitContent = content.split(" ");
+                    final AbstractCommand abstractCommand = commands.get(splitContent[0].substring(1));
+                    if (abstractCommand != null) {
+                        final int adjustedLength = splitContent.length - 1;
+                        final String[] commandArgs = new String[adjustedLength];
+                        System.arraycopy(splitContent, 1, commandArgs, 0, adjustedLength);
+                        abstractCommand.perform(userManager, message,this, commandArgs);
+                    }
+                    continue;
+                }
+
+                userManager.broadcast(new Message(message.getColor(), message.getFont(), formatMessage(message.getContent())));
             }
-            inputStream.close();
-            outputStream.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -73,8 +73,19 @@ public final class ChatClient extends Application {
                 timeline.getKeyFrames().add(new KeyFrame(Duration.seconds(0.5), action -> {
                     while (!readThread.getMessages().isEmpty()) {
                         final Message message = readThread.getMessages().remove(0);
-                        final Label messageLabel = LabelBuilder.create().text(message.getContent()).textFill(Color.valueOf(message.getColor())).style(String.format("-fx-font-size: 18; -fx-font-family: %s", message.getFont())).build();
-                        messageHolder.getChildren().add(messageLabel);
+                        final LabelBuilder labelBuilder = LabelBuilder.create().text(message.getContent());
+
+                        final String color = message.getColor();
+                        if (color != null && !color.isEmpty()) {
+                            labelBuilder.textFill(Color.valueOf(color));
+                        }
+
+                        final String font = message.getFont();
+                        if (font != null && !font.isEmpty()) {
+                            labelBuilder.style(String.format("-fx-font-size: 18; -fx-font-family: %s", message.getFont()));
+                        }
+
+                        messageHolder.getChildren().add(labelBuilder.build());
                     }
                 }));
                 readThread.start();
@@ -160,7 +171,7 @@ public final class ChatClient extends Application {
     @Override
     public void stop() {
         try {
-            outToServer.writeObject(new Message("", "", ClientWriteThread.QUIT_COMMAND));
+            outToServer.writeObject(new Message("", "", "/quit"));
             timeline.stop();
             socket.close();
             inFromServer.close();
