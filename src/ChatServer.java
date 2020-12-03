@@ -13,7 +13,8 @@ public final class ChatServer {
         final AbstractCommand[] allCommands = {
                 new ListCommand(),
                 new MsgCommand(),
-                new QuitCommand()
+                new QuitCommand(),
+                new TimeCommand()
         };
         for (AbstractCommand abstractCommand : allCommands) {
             commands.put(abstractCommand.getAlias(), abstractCommand);

@@ -10,6 +10,7 @@ public final class ClientWriteThread extends Thread {
     private final Socket socket;
     private final UserManager userManager;
     private final Map<String, AbstractCommand> commands;
+    private final long joinTime;
     private ObjectOutputStream outputStream;
     private ObjectInputStream inputStream;
     private String userName;
@@ -18,6 +19,7 @@ public final class ClientWriteThread extends Thread {
         this.socket = socket;
         this.userManager = userManager;
         this.commands = commands;
+        this.joinTime = System.currentTimeMillis();
         try {
             this.outputStream = new ObjectOutputStream(socket.getOutputStream());
             this.inputStream = new ObjectInputStream(socket.getInputStream());
@@ -45,6 +47,10 @@ public final class ClientWriteThread extends Thread {
 
     public String getUserName() {
         return userName;
+    }
+
+    public long getJoinTime() {
+        return joinTime;
     }
 
     @Override
