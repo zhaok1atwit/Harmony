@@ -15,7 +15,8 @@ public final class ChatServer {
                 new MsgCommand(),
                 new QuitCommand(),
                 new TimeCommand(),
-                new PingCommand()
+                new PingCommand(),
+                new DateCommand()
         };
         for (AbstractCommand abstractCommand : allCommands) {
             commands.put(abstractCommand.getAlias(), abstractCommand);
