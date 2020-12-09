@@ -1,7 +1,15 @@
+import command.*;
+import struct.ClientWriteThread;
+import struct.UserManager;
+
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
+/**
+ * The chat server
+ * @author Matt Lefebvre
+ */
 public final class ChatServer {
 
     public static void main(String[] args) throws Exception {

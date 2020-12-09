@@ -1,9 +1,15 @@
+package struct;
+
 import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Thread that receives messages from the server
+ * @author Matt Lefebvre
+ */
 public final class ClientReadThread extends Thread {
     private final Socket socket;
     private final ObjectInputStream inputStream;

@@ -1,5 +1,15 @@
+package command;
+
+import struct.ClientWriteThread;
+import struct.Message;
+import struct.UserManager;
+
 import java.io.IOException;
 
+/**
+ * Command that lists the users connected to the chat room
+ * @author Matt Lefebvre
+ */
 public final class ListCommand extends AbstractCommand {
 
     public ListCommand() {

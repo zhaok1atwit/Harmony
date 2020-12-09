@@ -1,6 +1,16 @@
+package command;
+
+import struct.ClientWriteThread;
+import struct.Message;
+import struct.UserManager;
+
 import java.io.IOException;
 
-public final class MsgCommand extends AbstractCommand{
+/**
+ * Command that will privately message a user if they are present in the chat room or send an error message if provided invalid arguments or an invalid target
+ * @author Matt Lefebvre
+ */
+public final class MsgCommand extends AbstractCommand {
 
     public MsgCommand() {
         super("msg", "Sends a message privately to a user (/msg <user> <msg>");

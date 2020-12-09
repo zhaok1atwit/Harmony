@@ -13,6 +13,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import struct.ClientReadThread;
+import struct.ColorHBox;
+import struct.Message;
+import struct.Utils;
 
 import java.io.*;
 import java.net.Socket;
@@ -20,6 +24,10 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * The chat client
+ * @author Matt Lefebvre
+ */
 public final class ChatClient extends Application {
     private static final String DEFAULT_COLOR = "BLACK";
     private static final String DEFAULT_FONT = "Cambria";

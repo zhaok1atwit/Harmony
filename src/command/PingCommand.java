@@ -1,3 +1,9 @@
+package command;
+
+import struct.ClientWriteThread;
+import struct.Message;
+import struct.UserManager;
+
 import java.io.IOException;
 
 public final class PingCommand extends AbstractCommand {

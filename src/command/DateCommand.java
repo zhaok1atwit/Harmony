@@ -1,8 +1,14 @@
+package command;
+
+import struct.ClientWriteThread;
+import struct.Message;
+import struct.UserManager;
+
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public final class DateCommand extends AbstractCommand{
+public final class DateCommand extends AbstractCommand {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat();
 
     static {
