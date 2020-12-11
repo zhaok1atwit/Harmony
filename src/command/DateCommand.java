@@ -8,6 +8,11 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * Command that shows the user the current date
+ * @author Kevin Zhao
+ */
+
 public final class DateCommand extends AbstractCommand {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat();
 

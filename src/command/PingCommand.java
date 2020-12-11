@@ -6,6 +6,11 @@ import struct.UserManager;
 
 import java.io.IOException;
 
+/**
+ * Command that shows the user their "ping"
+ * @author Kevin Zhao
+ */
+
 public final class PingCommand extends AbstractCommand {
 
     public PingCommand() {

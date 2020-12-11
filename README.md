@@ -19,7 +19,7 @@ communication platform that we use very frequently
 3. Run ChatClient.java (run multiple times for multiple clients)
 
 ## Demo video
-PLACEHOLDER
+https://youtu.be/1ojIzuqAroY
 
 ## Contributors
 

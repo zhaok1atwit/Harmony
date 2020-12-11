@@ -6,6 +6,11 @@ import struct.UserManager;
 
 import java.io.IOException;
 
+/**
+ * Command that shows the user how long they have been connected to the chatroom
+ * @author Kevin Zhao
+ */
+
 public final class TimeCommand extends AbstractCommand {
 
     public TimeCommand() {
